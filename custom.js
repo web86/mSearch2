@@ -194,7 +194,7 @@ var mSearch2 = {
                 }
                 if (mse2Config['page'] > 1) {
                     mse2Config['page'] = '';
-                    mSearch2.Hash.remove('page');
+                    mSearch2.Hash.remove(mse2Config.pageVar);
                     mSearch2.load();
                 }
 
@@ -217,7 +217,7 @@ var mSearch2 = {
 
                 if (mse2Config['page'] > 1) {
                     mse2Config['page'] = '';
-                    mSearch2.Hash.remove('page');
+                    mSearch2.Hash.remove(mse2Config.pageVar);
                     mSearch2.load();
                 }
                 break;
@@ -288,7 +288,7 @@ var mSearch2 = {
             var params = mSearch2.getFilters();
             if (mse2Config['page'] > 1 && (mse2Config['mode'] == 'scroll' || mse2Config['mode'] == 'button')) {
                 mse2Config['page'] = '';
-                delete(params['page']);
+                delete(params[mse2Config.pageVar]);
             }
             mSearch2.Hash.set(params);
             mSearch2.load(params);
@@ -309,7 +309,7 @@ var mSearch2 = {
                 var params = mSearch2.getFilters();
                 if (mse2Config['page'] > 1 && (mse2Config['mode'] == 'scroll' || mse2Config['mode'] == 'button')) {
                     mse2Config['page'] = '';
-                    delete(params['page']);
+                    delete(params[mse2Config.pageVar]);
                 }
                 mSearch2.Hash.set(params);
                 mSearch2.load(params);
@@ -469,7 +469,7 @@ var mSearch2 = {
             var params = mSearch2.getFilters();
             if (mse2Config['page'] > 1 && (mse2Config['mode'] == 'scroll' || mse2Config['mode'] == 'button')) {
                 mse2Config['page'] = '';
-                delete(params['page']);
+                delete(params[mse2Config.pageVar]);
             }
             mSearch2.Hash.set(params);
             mSearch2.load(params);
@@ -697,9 +697,13 @@ var mSearch2 = {
         if (mse2Config['tpl'] != '') {
             params.tpl = mse2Config['tpl'];
         }
+        // if (mse2Config['page'] > 0) {
+        //     params.page = mse2Config['page'];
+        // }
         if (mse2Config['page'] > 0) {
-            params.page = mse2Config['page'];
+            params[mse2Config.pageVar] = mse2Config['page'];
         }
+
         if (mse2Config['limit'] > 0) {
             params.limit = mse2Config['limit'];
         }
@@ -758,9 +762,12 @@ var mSearch2 = {
                     }
                     break;
                 case 'pagination':
-                    mse2Config['page'] = params['page'] == undefined
+                    // mse2Config['page'] = params['page'] == undefined
+                    //     ? ''
+                    //     : params['page'];
+                     mse2Config['page'] = params[mse2Config.pageVar] == undefined
                         ? ''
-                        : params['page'];
+                        : params[mse2Config.pageVar];
                     break;
                 case 'sort':
                     var sorts = {};
@@ -1096,7 +1103,7 @@ var mSearch2 = {
             delete(params['key']);
             delete(params['pageId']);
         }
-        delete(params['page']);
+        delete(params[mse2Config.pageVar]);
 
         var action = $(this.options.filters).attr('action');
         if (!mSearch2.options.autoLoad) {
@@ -1159,7 +1166,7 @@ var mSearch2 = {
             if (page > current) {
                 mse2Config['page'] = (page != mse2Config['start_page']) ? page : '';
                 var tmp = mSearch2.getFilters();
-                delete(tmp['page']);
+                delete(tmp[mse2Config.pageVar]);
                 mSearch2.Hash.set(tmp);
 
                 var params = mSearch2.getFilters();
