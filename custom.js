@@ -705,9 +705,16 @@ var mSearch2 = {
             params[mse2Config.pageVar] = mse2Config['page'];
         }
 
-        if (mse2Config['limit'] > 0) {
+        // if (mse2Config['limit'] > 0) {
+        //     params.limit = mse2Config['limit'];
+        // }
+        if (
+            mse2Config['limit'] > 0 &&
+            mse2Config['limit'] != mse2Config['start_limit']
+        ) {
             params.limit = mse2Config['limit'];
         }
+        
         // Filters
         $.map(this.filters.serializeArray(), function (n) {
             if (n.value === '') {
