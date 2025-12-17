@@ -1,5 +1,6 @@
 mse2Config = mse2Config || {};
 var mSearch2 = {
+    pageVar: 'str',
     initialized: false,
     loading: false,
     reached: false,
