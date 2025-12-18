@@ -1139,7 +1139,16 @@ var mSearch2 = {
         }
         else {
             mse2Config['page'] = '';
-            mSearch2.Hash.set(params);
+            //mSearch2.Hash.set(params);
+            // КЛОНИРУЕМ params для hash
+            var hashParams = $.extend({}, params);
+            
+            // убираем query ТОЛЬКО из URL
+            if (hashParams.query !== undefined) {
+                delete hashParams.query;
+            }
+            
+            mSearch2.Hash.set(hashParams);
             mSearch2.load(params);
             return false;
         }
