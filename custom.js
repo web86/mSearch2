@@ -1150,6 +1150,7 @@ var mSearch2 = {
             
             mSearch2.Hash.set(hashParams);
             mSearch2.load(params);
+
             return false;
         }
     },
@@ -1177,7 +1178,7 @@ var mSearch2 = {
                 this.sliders[value]['user_changed'] = false;
             }
         }
-
+        
         return this.submit();
     },
 
