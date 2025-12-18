@@ -80,9 +80,17 @@ var mSearch2 = {
 
         var submit = $(this.options.filters + ' [type="submit"]');
         if (this.options.autoLoad) {
-            $(document).on('change', this.options.filters, function () {
-                return mSearch2.submit();
-            });
+            // $(document).on('change', this.options.filters, function () {
+            //     return mSearch2.submit();
+            // });
+            // Исключаем поле поиска из авто сабмита
+            $(document).on(
+                'change',
+                this.options.filters + ' :input:not([name="query"])',
+                function () {
+                    return mSearch2.submit();
+                }
+            );
             submit.addClass('hidden');
         }
         else {
