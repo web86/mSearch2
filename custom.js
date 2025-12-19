@@ -27,8 +27,10 @@ var mSearch2 = {
 
         selected: '#mse2_selected',
         selected_tpl: '<a href="#" data-id="_id_" class="mse2_selected_link"><em>_title_</em><sup>x</sup></a>',
-        selected_wrapper_tpl: '<strong>_title_:</strong>',
-        selected_filters_delimeter: '; ',
+        //selected_wrapper_tpl: '<strong>_title_:</strong>',
+        selected_wrapper_tpl: '',
+        //selected_filters_delimeter: '; ',
+        selected_filters_delimeter: '',
         selected_values_delimeter: ' ',
 
         more: '.btn_more',
@@ -133,21 +135,44 @@ var mSearch2 = {
                 mSearch2.handleSelected($(this));
             });
 
-            $(document).on('click', this.options.selected + ' a', function () {
-                var id = $(this).data('id').replace(mse2Config['filter_delimeter'], "\\" + mse2Config['filter_delimeter']);
-                var elem = $('#' + id);
-                if (elem[0]) {
-                    switch (elem[0].tagName) {
-                        case 'INPUT':
-                            elem.prop('checked', false).trigger('change');
-                            break;
-                        case 'SELECT':
-                            elem.val(elem.find('option:first').prop('value')).trigger('change');
-                            break;
-                    }
+            // $(document).on('click', this.options.selected + ' a', function () {
+            //     var id = $(this).data('id').replace(mse2Config['filter_delimeter'], "\\" + mse2Config['filter_delimeter']);
+            //     var elem = $('#' + id);
+            //     if (elem[0]) {
+            //         switch (elem[0].tagName) {
+            //             case 'INPUT':
+            //                 elem.prop('checked', false).trigger('change');
+            //                 break;
+            //             case 'SELECT':
+            //                 elem.val(elem.find('option:first').prop('value')).trigger('change');
+            //                 break;
+            //         }
+            //     }
+            //     return false;
+            // });
+            // Слушаем крестики закрытия чипсов:
+            this.selected.on('click', '.mse2_selected_link', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            
+                var data = $(this).data('id').split(':');
+                var filterName = data[0];
+                var value = data[1];
+            
+                var select = $('select[name="' + filterName + '"]');
+                if (select.length) {
+                    select.find('option[value="' + value + '"]')
+                        .prop('selected', false);
+                    select.trigger('change');
+                    return;
                 }
-                return false;
+            
+                var checkbox = $('#' + value);
+                if (checkbox.length) {
+                    checkbox.prop('checked', false).trigger('change');
+                }
             });
+
         }
         mSearch2.setEmptyFieldsets();
         mSearch2.setTotal(this.total.text());
@@ -485,100 +510,233 @@ var mSearch2 = {
         });
     },
 
+    // handleSelected: function (input) {
+    //     if (!input[0]) {
+    //         return;
+    //     }
+    //     var id = input.prop('id');
+    //     var title = '';
+    //     var elem;
+
+    //     var filter = input.parents(this.options['filter_wrapper']);
+    //     var filter_title = '';
+    //     var tmp;
+    //     if (filter.length) {
+    //         tmp = filter.find(this.options['filter_title']);
+    //         if (tmp.length > 0) {
+    //             filter_title = tmp.text();
+    //         }
+    //     }
+    //     if (filter_title == '') {
+    //         //noinspection LoopStatementThatDoesntLoopJS
+    //         for (filter_title in this.selections) {
+    //             break;
+    //         }
+    //     }
+
+    //     switch (input[0].tagName) {
+    //         case 'INPUT':
+    //             var label = mSearch2.filters.find('label[for="' + input.prop('id') + '"]');
+    //             var sup = label.find('sup').text();
+    //             var text = label.text().trim();
+    //             if (sup) {
+    //                 title = text.replace(new RegExp(sup.replace('+', '\\+') + '$'), '');
+    //             } else {
+    //                 title = text;
+    //             }
+    //             $('[data-id="' + id + '"]', this.selected).remove();
+    //             if (input.is(':checked')) {
+    //                 elem = this.options['selected_tpl']
+    //                     .replace('[[+id]]', id).replace('[[+title]]', title)
+    //                     .replace('_id_', id).replace('_title_', title);
+    //             }
+    //             break;
+
+    //         case 'SELECT':
+    //             var option = input.find('option:selected');
+    //             $('[data-id="' + id + '"]', this.selected).remove();
+    //             if (input.val() != '') {
+    //                 title = ' ' + option.text().replace(/(\(.*\)$)/, '');
+    //                 elem = this.options['selected_tpl']
+    //                     .replace('[[+id]]', id).replace('[[+title]]', title)
+    //                     .replace('_id_', id).replace('_title_', title);
+    //             }
+    //             break;
+    //     }
+
+    //     if (elem != undefined) {
+    //         if (this.selections[filter_title] == undefined || input[0].type == 'radio') {
+    //             this.selections[filter_title] = {};
+    //         }
+    //         this.selections[filter_title][id] = elem;
+    //     }
+    //     else if (this.selections[filter_title] != undefined && this.selections[filter_title][id] != undefined) {
+    //         delete this.selections[filter_title][id];
+    //     }
+
+    //     this.selected.html('');
+    //     var count = 0;
+    //     var selected = [];
+    //     for (var i in this.selections) {
+    //         if (!this.selections.hasOwnProperty(i) || !Object.keys(this.selections).length) {
+    //             continue;
+    //         }
+    //         if (Object.keys(this.selections[i]).length) {
+    //             tmp = [];
+    //             for (var i2 in this.selections[i]) {
+    //                 if (!this.selections[i].hasOwnProperty(i2)) {
+    //                     continue;
+    //                 }
+    //                 tmp.push(this.selections[i][i2]);
+    //                 count++;
+    //             }
+    //             title = this.options['selected_wrapper_tpl']
+    //                 .replace('[[+title]]', i)
+    //                 .replace('_title_', i);
+    //             selected.push(title + tmp.join(this.options['selected_values_delimeter']));
+    //         }
+    //     }
+
+    //     if (count) {
+    //         this.selected.append(selected.join(this.options['selected_filters_delimeter'])).show();
+    //     }
+    //     else {
+    //         this.selected.hide();
+    //     }
+    // },
+
     handleSelected: function (input) {
-        if (!input[0]) {
+        if (!input || !input[0]) {
             return;
         }
-        var id = input.prop('id');
-        var title = '';
+    
         var elem;
-
-        var filter = input.parents(this.options['filter_wrapper']);
         var filter_title = '';
+        var filter;
         var tmp;
+    
+        /* -----------------------------
+           1. Название фильтра
+        ----------------------------- */
+    
+        filter = input.parents(this.options['filter_wrapper']);
         if (filter.length) {
             tmp = filter.find(this.options['filter_title']);
-            if (tmp.length > 0) {
-                filter_title = tmp.text();
+            if (tmp.length) {
+                filter_title = $.trim(tmp.text());
             }
         }
-        if (filter_title == '') {
-            //noinspection LoopStatementThatDoesntLoopJS
+    
+        if (!filter_title) {
             for (filter_title in this.selections) {
                 break;
             }
         }
-
-        switch (input[0].tagName) {
-            case 'INPUT':
-                var label = mSearch2.filters.find('label[for="' + input.prop('id') + '"]');
-                var sup = label.find('sup').text();
-                var text = label.text().trim();
-                if (sup) {
-                    title = text.replace(new RegExp(sup.replace('+', '\\+') + '$'), '');
-                } else {
-                    title = text;
-                }
-                $('[data-id="' + id + '"]', this.selected).remove();
-                if (input.is(':checked')) {
-                    elem = this.options['selected_tpl']
-                        .replace('[[+id]]', id).replace('[[+title]]', title)
-                        .replace('_id_', id).replace('_title_', title);
-                }
-                break;
-
-            case 'SELECT':
-                var option = input.find('option:selected');
-                $('[data-id="' + id + '"]', this.selected).remove();
-                if (input.val() != '') {
-                    title = ' ' + option.text().replace(/(\(.*\)$)/, '');
-                    elem = this.options['selected_tpl']
-                        .replace('[[+id]]', id).replace('[[+title]]', title)
-                        .replace('_id_', id).replace('_title_', title);
-                }
-                break;
+    
+        /* -----------------------------
+           2. Определяем ID фильтра
+           В mFilter2 это name, а не id
+        ----------------------------- */
+    
+        var filterId = input.prop('name') || '';
+        //очистим тайтл от "&nbsp;(2)"
+        function stripMSE2Count(text) {
+            return text.replace(/\s*\(\d+\)\s*$/, '').trim();
         }
-
-        if (elem != undefined) {
-            if (this.selections[filter_title] == undefined || input[0].type == 'radio') {
-                this.selections[filter_title] = {};
+    
+        /* -----------------------------
+           3. INPUT (checkbox / radio)
+        ----------------------------- */
+    
+        if (input[0].tagName === 'INPUT') {
+    
+            var id = input.prop('id');
+            var label = mSearch2.filters.find('label[for="' + id + '"]');
+            var title = stripMSE2Count($.trim($(option).text()));
+            var key = filterId + ':' + id;
+    
+            delete this.selections[filter_title]?.[key];
+    
+            if (input.is(':checked')) {
+                elem = this.options.selected_tpl
+                    .replace('_id_', key)
+                    .replace('_title_', title);
+    
+                this.selections[filter_title] = this.selections[filter_title] || {};
+                this.selections[filter_title][key] = elem;
             }
-            this.selections[filter_title][id] = elem;
         }
-        else if (this.selections[filter_title] != undefined && this.selections[filter_title][id] != undefined) {
-            delete this.selections[filter_title][id];
+    
+        /* -----------------------------
+           4. SELECT (multiple)
+        ----------------------------- */
+    
+        if (input[0].tagName === 'SELECT') {
+    
+            this.selections[filter_title] = this.selections[filter_title] || {};
+    
+            // Текущие выбранные значения
+            var selectedValues = input.val() || [];
+    
+            // Удаляем снятые значения
+            for (var key in this.selections[filter_title]) {
+                if (!this.selections[filter_title].hasOwnProperty(key)) continue;
+    
+                var parts = key.split(':');
+                if (parts[0] === filterId && selectedValues.indexOf(parts[1]) === -1) {
+                    delete this.selections[filter_title][key];
+                }
+            }
+    
+            // Добавляем новые выбранные значения
+            input.find('option:selected').each((_, option) => {
+                var value = option.value;
+                var key = filterId + ':' + value;
+    
+                if (this.selections[filter_title][key]) {
+                    return;
+                }
+    
+                var title = stripMSE2Count($.trim($(option).text()));
+    
+                elem = this.options.selected_tpl
+                    .replace('_id_', key)
+                    .replace('_title_', title);
+    
+                this.selections[filter_title][key] = elem;
+            });
         }
-
-        this.selected.html('');
-        var count = 0;
+    
+        /* -----------------------------
+           5. Сборка чипсов
+        ----------------------------- */
+    
         var selected = [];
-        for (var i in this.selections) {
-            if (!this.selections.hasOwnProperty(i) || !Object.keys(this.selections).length) {
-                continue;
-            }
-            if (Object.keys(this.selections[i]).length) {
-                tmp = [];
-                for (var i2 in this.selections[i]) {
-                    if (!this.selections[i].hasOwnProperty(i2)) {
-                        continue;
-                    }
-                    tmp.push(this.selections[i][i2]);
-                    count++;
-                }
-                title = this.options['selected_wrapper_tpl']
-                    .replace('[[+title]]', i)
-                    .replace('_title_', i);
-                selected.push(title + tmp.join(this.options['selected_values_delimeter']));
+        var count = 0;
+    
+        for (var group in this.selections) {
+            if (!this.selections.hasOwnProperty(group)) continue;
+    
+            for (var k in this.selections[group]) {
+                if (!this.selections[group].hasOwnProperty(k)) continue;
+    
+                selected.push(
+                    '<span class="mse2_chip">' +
+                        '<strong>' + group + ':</strong> ' +
+                        this.selections[group][k] +
+                    '</span>'
+                );
+                count++;
             }
         }
-
+    
         if (count) {
-            this.selected.append(selected.join(this.options['selected_filters_delimeter'])).show();
-        }
-        else {
-            this.selected.hide();
+            this.selected.html(selected.join('')).show();
+        } else {
+            this.selected.hide().html('');
         }
     },
+
 
     handleNumbers: function () {
         var groups = {};
