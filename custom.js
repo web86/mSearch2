@@ -26,7 +26,7 @@ var mSearch2 = {
         tpl_link: '#mse2_tpl a',
 
         selected: '#mse2_selected',
-        selected_tpl: '<a href="#" data-id="_id_" class="mse2_selected_link"><em>_title_</em><sup>x</sup></a>',
+        selected_tpl: '<a href="#" data-id="_id_" class="mse2_selected_link"><span>_title_</span><b>x</b></a>',
         //selected_wrapper_tpl: '<strong>_title_:</strong>',
         selected_wrapper_tpl: '',
         //selected_filters_delimeter: '; ',
