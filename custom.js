@@ -381,6 +381,13 @@ var mSearch2 = {
             }
 
             var name = imin.prop('name');
+            
+            // стартовые значения
+            var startValues = null;
+            if (mSearch2.startParams && mSearch2.startParams[name]) {
+                startValues = mSearch2.startParams[name].split(mse2Config['values_delimeter']);
+            }
+            
             $this.slider({
                 min: vmin,
                 max: vmax,
@@ -479,7 +486,30 @@ var mSearch2 = {
             
             }
 
-            mSearch2.sliders[name]['values'] = [vmin, vmax];
+            // mSearch2.sliders[name]['values'] = [vmin, vmax];
+            // if (mSearch2.startParams[name]) {
+            //     mSearch2.sliders[name]['values'] = tmp;
+            // } else {
+            //     mSearch2.sliders[name]['values'] = [vmin, vmax];
+            // }
+            if (startValues) {
+                mSearch2.sliders[name]['values'] = [
+                    Number(startValues[0]),
+                    Number(startValues[1])
+                ];
+            } else {
+                mSearch2.sliders[name]['values'] = [vmin, vmax];
+            }
+            
+            if (startValues) {
+                $this.slider('values', [
+                    Number(startValues[0]),
+                    Number(startValues[1])
+                ]);
+                imin.val(startValues[0]);
+                imax.val(startValues[1]);
+            }
+            
             if (!isNaN(cmin) && !isNaN(cmax)) {
                 if (cmin != 0 && cmin != vmin) {
                     $this.slider('values', 0, cmin);
@@ -1548,3 +1578,13 @@ mSearch2.Hash = {
 };
 
 mSearch2.startParams = mSearch2.Hash.get();
+
+// ДОПОЛНЯЕМ стартовые параметры данными с сервера
+if (window.mse2StartParams && typeof window.mse2StartParams === 'object') {
+    mSearch2.startParams = Object.assign(
+        {},
+        mSearch2.startParams,
+        window.mse2StartParams
+    );
+}
+console.log('[DEBUG] startParams final', mSearch2.startParams);
