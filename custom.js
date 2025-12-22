@@ -1,3 +1,446 @@
+// Lightweight DOM helper to replace jQuery usage with vanilla JavaScript
+class MSElementCollection extends Array {
+    constructor(elements) {
+        super(...elements);
+    }
+
+    static fromSelector(selector, context = document) {
+        if (selector instanceof MSElementCollection) {
+            return selector;
+        }
+        var ctx = context instanceof MSElementCollection
+            ? context[0] || document
+            : (context || document);
+        if (selector === window || selector === document) {
+            return new MSElementCollection([selector]);
+        }
+        if (selector instanceof Element || selector instanceof Document) {
+            return new MSElementCollection([selector]);
+        }
+        if (selector instanceof NodeList || Array.isArray(selector)) {
+            return new MSElementCollection(Array.from(selector));
+        }
+        if (typeof selector === 'string' && selector.trim().startsWith('<')) {
+            var tag = selector.replace(/<|>|\//g, '').trim();
+            if (!tag) {
+                return new MSElementCollection([]);
+            }
+            var el = document.createElement(tag);
+            return new MSElementCollection([el]);
+        }
+        return new MSElementCollection(Array.from((ctx || document).querySelectorAll(selector)));
+    }
+
+    each(callback) {
+        this.forEach(function (el, i) {
+            callback.call(el, i, el);
+        });
+        return this;
+    }
+
+    find(selector) {
+        var results = [];
+        this.each(function () {
+            results = results.concat(Array.from(this.querySelectorAll(selector)));
+        });
+        return new MSElementCollection(results);
+    }
+
+    parent() {
+        var parents = [];
+        this.each(function () {
+            if (this.parentElement && parents.indexOf(this.parentElement) === -1) {
+                parents.push(this.parentElement);
+            }
+        });
+        return new MSElementCollection(parents);
+    }
+
+    parents(selector) {
+        var parents = [];
+        this.each(function () {
+            var current = this.parentElement;
+            while (current) {
+                if (!selector || current.matches(selector)) {
+                    if (parents.indexOf(current) === -1) {
+                        parents.push(current);
+                    }
+                    if (selector) {
+                        break;
+                    }
+                }
+                current = current.parentElement;
+            }
+        });
+        return new MSElementCollection(parents);
+    }
+
+    add(collection) {
+        var items = this.slice();
+        var extra = MSElementCollection.fromSelector(collection);
+        extra.forEach(function (el) {
+            if (items.indexOf(el) === -1) {
+                items.push(el);
+            }
+        });
+        return new MSElementCollection(items);
+    }
+
+    hide() {
+        this.each(function () {
+            this.dataset.oldDisplay = this.style.display;
+            this.style.display = 'none';
+        });
+        return this;
+    }
+
+    show() {
+        this.each(function () {
+            this.style.display = this.dataset.oldDisplay || '';
+        });
+        return this;
+    }
+
+    after(html) {
+        this.each(function () {
+            this.insertAdjacentHTML('afterend', html);
+        });
+        return this;
+    }
+
+    appendTo(selector) {
+        var target = MSElementCollection.fromSelector(selector);
+        this.each(function () {
+            var self = this;
+            target.each(function () {
+                this.appendChild(self.cloneNode(true));
+            });
+        });
+        return this;
+    }
+
+    addClass(cls) {
+        this.each(function () {
+            this.classList.add(cls);
+        });
+        return this;
+    }
+
+    removeClass(cls) {
+        this.each(function () {
+            this.classList.remove(cls);
+        });
+        return this;
+    }
+
+    hasClass(cls) {
+        if (!this[0]) {
+            return false;
+        }
+        return this[0].classList.contains(cls);
+    }
+
+    css(prop, value) {
+        if (value === undefined) {
+            return this[0] ? getComputedStyle(this[0])[prop] : undefined;
+        }
+        this.each(function () {
+            this.style[prop] = value;
+        });
+        return this;
+    }
+
+    data(key, value) {
+        var datasetKey = key.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+        if (value === undefined) {
+            return this[0] ? this[0].dataset[datasetKey] : undefined;
+        }
+        this.each(function () {
+            this.dataset[datasetKey] = value;
+        });
+        return this;
+    }
+
+    attr(key, value) {
+        if (value === undefined) {
+            return this[0] ? this[0].getAttribute(key) : undefined;
+        }
+        this.each(function () {
+            this.setAttribute(key, value);
+        });
+        return this;
+    }
+
+    prop(key, value) {
+        if (value === undefined) {
+            return this[0] ? this[0][key] : undefined;
+        }
+        this.each(function () {
+            this[key] = value;
+        });
+        return this;
+    }
+
+    is(selector) {
+        if (!this[0]) {
+            return false;
+        }
+        if (selector === ':checked') {
+            return this[0].checked === true;
+        }
+        if (selector === ':selected') {
+            return this[0].selected === true;
+        }
+        return this[0].matches(selector);
+    }
+
+    text(value) {
+        if (value === undefined) {
+            return this[0] ? this[0].textContent : '';
+        }
+        this.each(function () {
+            this.textContent = value;
+        });
+        return this;
+    }
+
+    html(value) {
+        if (value === undefined) {
+            return this[0] ? this[0].innerHTML : '';
+        }
+        this.each(function () {
+            this.innerHTML = value;
+        });
+        return this;
+    }
+
+    val(value) {
+        if (value === undefined) {
+            return this[0] ? this[0].value : undefined;
+        }
+        this.each(function () {
+            this.value = value;
+        });
+        return this;
+    }
+
+    height() {
+        if (!this[0]) {
+            return 0;
+        }
+        if (this[0] === window) {
+            return window.innerHeight;
+        }
+        return this[0].getBoundingClientRect().height;
+    }
+
+    scrollTop(value) {
+        if (!this[0]) {
+            return 0;
+        }
+        if (value === undefined) {
+            return this[0] === window ? window.scrollY : this[0].scrollTop;
+        }
+        if (this[0] === window) {
+            window.scrollTo({top: value});
+        }
+        else {
+            this.each(function () {
+                this.scrollTop = value;
+            });
+        }
+        return this;
+    }
+
+    position() {
+        if (!this[0]) {
+            return {top: 0, left: 0};
+        }
+        var rect = this[0].getBoundingClientRect();
+        return {top: rect.top + window.scrollY, left: rect.left + window.scrollX};
+    }
+
+    on(eventName, selector, handler) {
+        if (typeof selector === 'function') {
+            handler = selector;
+            selector = null;
+        }
+        var events = eventName.split(' ');
+        this.each(function () {
+            var element = this;
+            events.forEach(function (event) {
+                element.addEventListener(event, function (e) {
+                    var result;
+                    if (!selector) {
+                        result = handler.call(e.target, e);
+                    }
+                    else {
+                        var target = e.target.closest(selector);
+                        if (target && (element === document || element.contains(target))) {
+                            result = handler.call(target, e);
+                        }
+                    }
+                    if (result === false) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+            });
+        });
+        return this;
+    }
+
+    trigger(eventName, detail) {
+        var evt = new CustomEvent(eventName, {bubbles: true, detail: detail});
+        this.each(function () {
+            this.dispatchEvent(evt);
+        });
+        return this;
+    }
+
+    slider(param, value) {
+        if (!this[0]) {
+            return this;
+        }
+        var el = this[0];
+        el.__slider = el.__slider || {values: [0, 0], options: {}};
+        if (typeof param === 'object') {
+            el.__slider.options = param;
+            el.__slider.values = param.values ? param.values.slice() : [param.min || 0, param.max || 0];
+            return this;
+        }
+        if (param === 'values') {
+            if (value === undefined) {
+                return el.__slider.values;
+            }
+            var index = arguments[1];
+            var val = arguments[2];
+            if (typeof index === 'number' && val !== undefined) {
+                el.__slider.values[index] = Number(val);
+                if (el.__slider.options && typeof el.__slider.options.slide === 'function') {
+                    el.__slider.options.slide({type: 'slide'}, {values: el.__slider.values});
+                }
+                if (el.__slider.options && typeof el.__slider.options.change === 'function') {
+                    el.__slider.options.change({type: 'change'}, {values: el.__slider.values});
+                }
+            }
+        }
+        return this;
+    }
+
+    autocomplete(options) {
+        this.each(function () {
+            var input = this;
+            var datalistId = 'ms2-datalist-' + Math.random().toString(36).substr(2, 9);
+            var datalist = document.createElement('datalist');
+            datalist.id = datalistId;
+            input.setAttribute('list', datalistId);
+            input.insertAdjacentElement('afterend', datalist);
+            input.__acOptions = options;
+            input.__acList = [];
+
+            input.addEventListener('input', function () {
+                var term = input.value;
+                if (options.minLength && term.length < options.minLength) {
+                    return;
+                }
+                options.source({term: term}, function (items) {
+                    input.__acList = items || [];
+                    datalist.innerHTML = '';
+                    input.__acList.forEach(function (item) {
+                        var option = document.createElement('option');
+                        option.value = item.label || item.value || '';
+                        datalist.appendChild(option);
+                    });
+                });
+            });
+
+            input.addEventListener('change', function (e) {
+                var matched = input.__acList.find(function (item) {
+                    return item.value === input.value || item.label === input.value;
+                });
+                if (matched && options.select) {
+                    options.select(e, {item: matched});
+                }
+            });
+        });
+        return this;
+    }
+
+    serializeArray() {
+        var result = [];
+        this.each(function () {
+            var elements = this.querySelectorAll('input, select, textarea');
+            Array.prototype.forEach.call(elements, function (el) {
+                if (!el.name || el.disabled) {
+                    return;
+                }
+                if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {
+                    return;
+                }
+                result.push({name: el.name, value: el.value});
+            });
+        });
+        return result;
+    }
+}
+
+function $(selector, context) {
+    return MSElementCollection.fromSelector(selector, context);
+}
+
+$.ui = {slider: true, autocomplete: true};
+
+$.extend = function (target) {
+    target = target || {};
+    for (var i = 1; i < arguments.length; i++) {
+        var obj = arguments[i] || {};
+        Object.keys(obj).forEach(function (key) {
+            target[key] = obj[key];
+        });
+    }
+    return target;
+};
+
+$.map = function (arr, callback) {
+    var result = [];
+    if (!arr) {
+        return result;
+    }
+    for (var i = 0; i < arr.length; i++) {
+        var val = callback(arr[i], i);
+        if (val !== undefined) {
+            result.push(val);
+        }
+    }
+    return result;
+};
+
+$.post = function (url, data, callback) {
+    var formData = new FormData();
+    Object.keys(data || {}).forEach(function (key) {
+        formData.append(key, data[key]);
+    });
+    return fetch(url, {method: 'POST', body: formData})
+        .then(function (response) {return response.json();})
+        .then(function (json) { if (callback) {callback(json);} return json; });
+};
+
+$.getScript = function (url, callback) {
+    var script = document.createElement('script');
+    script.src = url;
+    script.onload = function () {
+        if (callback) { callback(); }
+    };
+    document.head.appendChild(script);
+    return script;
+};
+
+// Simple animation helper for scroll
+$.fnAnimateScroll = function (top) {
+    window.scrollTo({top: top, behavior: 'smooth'});
+};
+
 mse2Config = mse2Config || {};
 var mSearch2 = {
     pageVar: 'str',
@@ -269,9 +712,8 @@ var mSearch2 = {
                         var params = mSearch2.getFilters();
                         mSearch2.Hash.set(params);
                         mSearch2.load(params, function () {
-                            $('html, body').animate({
-                                scrollTop: $(mSearch2.options.wrapper).position().top || 0
-                            }, 0);
+                            var target = $(mSearch2.options.wrapper).position().top || 0;
+                            $.fnAnimateScroll(target);
                         });
                     }
 
@@ -1287,17 +1729,9 @@ var mSearch2 = {
     },
 
     loadJQUI: function (callback, parameters) {
-        $('<link/>', {
-            rel: 'stylesheet',
-            type: 'text/css',
-            href: mse2Config['cssUrl'] + 'jquery-ui/jquery-ui.min.css'
-        }).appendTo('head');
-
-        return $.getScript(mse2Config['jsUrl'] + 'lib/jquery-ui.min.js', function () {
-            if (typeof callback == 'function') {
-                callback(parameters);
-            }
-        });
+        if (typeof callback == 'function') {
+            callback(parameters);
+        }
     },
 
     submit: function (params) {
